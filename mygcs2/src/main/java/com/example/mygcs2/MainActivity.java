@@ -18,6 +18,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -49,7 +50,10 @@ import com.o3dr.services.android.lib.drone.companion.solo.SoloAttributes;
 import com.o3dr.services.android.lib.drone.companion.solo.SoloState;
 import com.o3dr.services.android.lib.drone.connection.ConnectionParameter;
 import com.o3dr.services.android.lib.drone.connection.ConnectionType;
+import com.o3dr.services.android.lib.drone.mission.item.command.YawCondition;
 import com.o3dr.services.android.lib.drone.property.Altitude;
+import com.o3dr.services.android.lib.drone.property.Attitude;
+import com.o3dr.services.android.lib.drone.property.Battery;
 import com.o3dr.services.android.lib.drone.property.Gps;
 import com.o3dr.services.android.lib.drone.property.Home;
 import com.o3dr.services.android.lib.drone.property.Speed;
@@ -218,9 +222,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 updateAltitude();
                 break;
 
-            case AttributeEvent.HOME_UPDATED:
-                //TODO 사용하지 않는 코드 (사용자와의 거리) 001
-                //updateDistanceFromHome();
+            case AttributeEvent.BATTERY_UPDATED:
+                updateVoltage();
+                break;
+
+            case AttributeEvent.GPS_POSITION:
+                updateDronePosition();
+                break;
+
+            case AttributeEvent.GPS_COUNT:
+                updateSattle();
+                break;
+
+            case AttributeEvent.ATTITUDE_UPDATED:
+                updateYAW();
                 break;
 
             default:
@@ -379,7 +394,39 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Speed droneSpeed = this.drone.getAttribute(AttributeType.SPEED);
         speedTextView.setText(String.format("%3.1f", droneSpeed.getGroundSpeed()) + "m/s");
     }
-    //TODO 사용하지 않는 함수 001
+
+    protected void updateYAW(){
+        TextView yawTextView = (TextView) findViewById(R.id.yawValueTextView);
+        Attitude attitude = this.drone.getAttribute(AttributeType.ATTITUDE);
+        yawTextView.setText(String.format("%3.1f", attitude.getYaw()) + "deg");
+
+        ImageView droneImage = (ImageView) findViewById(R.id.droneImage);
+        droneImage.setRotation((float)attitude.getYaw());
+    }
+
+    protected void updateSattle(){
+        TextView sattleCountTextView = (TextView) findViewById(R.id.settleCountTextView);
+        Gps gps = this.drone.getAttribute(AttributeType.GPS);
+        sattleCountTextView.setText((String.format("%d", gps.getSatellitesCount())));
+    }
+
+    protected void updateVoltage(){
+        TextView voltageValueTextView = (TextView) findViewById(R.id.voltageValueTextView);
+        Battery battery = this.drone.getAttribute(AttributeType.BATTERY);
+        voltageValueTextView.setText(String.format("%3.1f", battery.getBatteryVoltage()));
+    }
+
+    protected void updateDronePosition(){
+        Gps currentDronePositionGPS = this.drone.getAttribute(AttributeType.GPS);
+        Log.d("Position", String.format("%f, %f", currentDronePositionGPS.getPosition().getLatitude(), currentDronePositionGPS.getPosition().getLongitude()));
+        LatLong currentDronePosition = currentDronePositionGPS.getPosition();
+        LatLng currentDronePosisionInNaverMap = new LatLng(currentDronePosition.getLatitude(), currentDronePosition.getLongitude());
+        Log.d("Current Position", String.format("%f, %f",currentDronePosisionInNaverMap.latitude,currentDronePosisionInNaverMap.longitude));
+        Marker marker = new Marker();
+        marker.setMap(naverMap);
+        marker.setPosition(currentDronePosisionInNaverMap);
+    }
+
 /*
     protected void updateDistanceFromHome() {
         TextView distanceTextView = (TextView) findViewById(R.id.distanceValueTextView);
@@ -415,6 +462,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         ArrayAdapter arrayAdapter = (ArrayAdapter) this.modeSelector.getAdapter();
         this.modeSelector.setSelection(arrayAdapter.getPosition(vehicleMode));
     }
+
+
 
     // Helper methods
     // ==========================================================
@@ -718,6 +767,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 showMessage(location.getLatitude() + ", " + location.getLongitude());
             }
         });
+
+
     }
 
     private void showMessage(String msg) {
