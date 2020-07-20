@@ -85,12 +85,6 @@
             android:text="전압"
             android:textColor="#FFFFFF" />
 
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/droneImage"
-            android:src="@drawable/droneIcon"/>
-
         <Spinner
             android:id="@+id/modeSelect"
             android:layout_width="30dp"

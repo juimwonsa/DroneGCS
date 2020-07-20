@@ -24,12 +24,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.naver.maps.geometry.LatLng;
+import com.naver.maps.map.CameraUpdate;
 import com.naver.maps.map.LocationTrackingMode;
 import com.naver.maps.map.MapFragment;
 import com.naver.maps.map.NaverMap;
 import com.naver.maps.map.OnMapReadyCallback;
+import com.naver.maps.map.overlay.ArrowheadPathOverlay;
 import com.naver.maps.map.overlay.InfoWindow;
+import com.naver.maps.map.overlay.LocationOverlay;
 import com.naver.maps.map.overlay.Marker;
+import com.naver.maps.map.overlay.OverlayImage;
+import com.naver.maps.map.overlay.PolylineOverlay;
 import com.naver.maps.map.util.FusedLocationSource;
 import com.o3dr.android.client.ControlTower;
 import com.o3dr.android.client.Drone;
@@ -65,6 +70,7 @@ import com.o3dr.services.android.lib.model.AbstractCommandListener;
 import com.o3dr.services.android.lib.model.SimpleCommandListener;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.o3dr.android.client.apis.ExperimentalApi.getApi;
@@ -75,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private FusedLocationSource locationSource;
     private NaverMap naverMap;
     private static final String TAG = MainActivity.class.getSimpleName();
-
+    private ArrowheadPathOverlay arrowheadPath = new ArrowheadPathOverlay();
     private Drone drone;
     private int droneType = Type.TYPE_UNKNOWN;
     private ControlTower controlTower;
@@ -92,13 +98,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Button startVideoStreamUsingObserver;
     private Button stopVideoStreamUsingObserver;
 
+    private LatLng currentDronePosisionInNaverMap;
+
     private MediaCodecManager mediaCodecManager;
 
     private TextureView videoView;
 
     private String videoTag = "testvideotag";
-
+    private Marker droneMarker = new Marker();
     Handler mainHandler;
+
+    private ArrayList<LatLng> polyLineCoords = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -227,7 +237,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 break;
 
             case AttributeEvent.GPS_POSITION:
-                updateDronePosition();
+                updateDroneMarker();
                 break;
 
             case AttributeEvent.GPS_COUNT:
@@ -399,9 +409,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         TextView yawTextView = (TextView) findViewById(R.id.yawValueTextView);
         Attitude attitude = this.drone.getAttribute(AttributeType.ATTITUDE);
         yawTextView.setText(String.format("%3.1f", attitude.getYaw()) + "deg");
-
-        ImageView droneImage = (ImageView) findViewById(R.id.droneImage);
-        droneImage.setRotation((float)attitude.getYaw());
     }
 
     protected void updateSattle(){
@@ -416,17 +423,42 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         voltageValueTextView.setText(String.format("%3.1f", battery.getBatteryVoltage()));
     }
 
-    protected void updateDronePosition(){
-        Gps currentDronePositionGPS = this.drone.getAttribute(AttributeType.GPS);
-        Log.d("Position", String.format("%f, %f", currentDronePositionGPS.getPosition().getLatitude(), currentDronePositionGPS.getPosition().getLongitude()));
-        LatLong currentDronePosition = currentDronePositionGPS.getPosition();
-        LatLng currentDronePosisionInNaverMap = new LatLng(currentDronePosition.getLatitude(), currentDronePosition.getLongitude());
-        Log.d("Current Position", String.format("%f, %f",currentDronePosisionInNaverMap.latitude,currentDronePosisionInNaverMap.longitude));
-        Marker marker = new Marker();
-        marker.setMap(naverMap);
-        marker.setPosition(currentDronePosisionInNaverMap);
+    protected void updateDroneMarker(){
+        LatLong currentLatlongLocation = getCurrentLocation();
+        try {
+            LatLng currentLatlngLocation = new LatLng(currentLatlongLocation.getLatitude(), currentLatlongLocation.getLongitude());
+            Attitude attitude = this.drone.getAttribute(AttributeType.ATTITUDE);
+
+            LocationOverlay locationOverlay = naverMap.getLocationOverlay();
+            locationOverlay.setVisible(true);
+            locationOverlay.setPosition(currentLatlngLocation);
+            locationOverlay.setIcon(OverlayImage.fromResource(R.drawable.droneicon));
+            locationOverlay.setBearing((float)attitude.getYaw());
+
+            PolylineOverlay polyline = new PolylineOverlay();
+            polyLineCoords.add(currentLatlngLocation);
+            polyline.setCoords(polyLineCoords);
+            polyline.setMap(naverMap);
+
+            ArrayList<LatLng> arrowheads = new ArrayList<LatLng>();
+            arrowheads.add(currentLatlngLocation);
+            arrowheads.add(Utils.headPointer(currentLatlngLocation, attitude.getYaw()));
+            this.arrowheadPath.setCoords(arrowheads);
+            this.arrowheadPath.setMap(naverMap);
+
+            CameraUpdate cameraUpdate = CameraUpdate.scrollTo(currentLatlngLocation);
+            naverMap.moveCamera(cameraUpdate);
+        }
+        catch(NullPointerException e){
+            Toast toast = Toast.makeText(this.getApplicationContext(),"GPS 연결 상태를 확인해주세요", Toast.LENGTH_SHORT);
+            toast.show();
+        }
     }
 
+    protected LatLong getCurrentLocation(){
+        Gps gps = this.drone.getAttribute(AttributeType.GPS);
+        return gps.getPosition();
+    }
 /*
     protected void updateDistanceFromHome() {
         TextView distanceTextView = (TextView) findViewById(R.id.distanceValueTextView);
