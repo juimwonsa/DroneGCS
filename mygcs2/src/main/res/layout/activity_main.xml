@@ -19,7 +19,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="onBtnConnectTap"
-        android:text="connect"
+        android:text="@string/btnConnect"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.059"
@@ -32,10 +32,23 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="onArmButtonTap"
-        android:text="ARM"
+        android:text="@string/btnArmTakeOff"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.231"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.889" />
+
+    <Button
+        android:id="@+id/button5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="btn_basic"
+        android:text="@string/button5"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.8"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.889" />
@@ -45,26 +58,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="btn_hybrid"
-        android:text="Hybrid"
+        android:text="@string/button4"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.95"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.95" />
-
-    <Button
-        android:id="@+id/button5"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:onClick="btn_basic"
-        android:text="Basic"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.80"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.95" />
+        app:layout_constraintVertical_bias="0.889" />
 
     <LinearLayout
         android:id="@+id/linearLayout"
@@ -127,28 +127,45 @@
     </LinearLayout>
 
     <Button
-        android:id="@+id/btnTakeOff"
+        android:id="@+id/btnAltitudeText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Take-Off"
+        android:text="0.0m"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.059"
+        app:layout_constraintHorizontal_bias="0.912"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.724" />
+        app:layout_constraintVertical_bias="0.179"
+        android:onClick="onBtnAltitudeTextTap"/>
 
     <Button
-        android:id="@+id/btnLand"
+        android:id="@+id/btnAltitudeUp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Land"
+        android:text="+0.5"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.231"
+        app:layout_constraintHorizontal_bias="0.912"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.724" />
+        app:layout_constraintTop_toBottomOf="@+id/btnAltitudeText"
+        app:layout_constraintVertical_bias="0.068"
+        android:visibility="invisible"
+        android:onClick="onBtnAltitudeUpTap"/>
+
+    <Button
+        android:id="@+id/btnAltitudeDown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="-0.5"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.912"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnAltitudeUp"
+        app:layout_constraintVertical_bias="0.064"
+        android:visibility="invisible"
+        android:onClick="onBtnAltitudeDownTap"/>
 
 
 </android.support.constraint.ConstraintLayout>

@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">MyGCS2</string>
+    <string name= "btnConnect">Connect</string>
+    <string name= "btnArmTakeOff">ARM</string>
+    <string name= "button4">hybrid</string>
+    <string name= "button5">basic</string>
 </resources>
