@@ -1,16 +1,13 @@
 package com.example.mygcs2;
 
-import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.PointF;
-import android.graphics.SurfaceTexture;
 import android.location.Location;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
-import android.support.annotation.UiThread;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -22,7 +19,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -39,6 +35,7 @@ import com.naver.maps.map.overlay.LocationOverlay;
 import com.naver.maps.map.overlay.Marker;
 import com.naver.maps.map.overlay.OverlayImage;
 import com.naver.maps.map.overlay.PolylineOverlay;
+import com.naver.maps.map.renderer.glsurfaceview.MapGLSurfaceView;
 import com.naver.maps.map.util.FusedLocationSource;
 import com.o3dr.android.client.ControlTower;
 import com.o3dr.android.client.Drone;
@@ -58,13 +55,10 @@ import com.o3dr.services.android.lib.drone.attribute.AttributeType;
 import com.o3dr.services.android.lib.drone.companion.solo.SoloAttributes;
 import com.o3dr.services.android.lib.drone.companion.solo.SoloState;
 import com.o3dr.services.android.lib.drone.connection.ConnectionParameter;
-import com.o3dr.services.android.lib.drone.connection.ConnectionType;
-import com.o3dr.services.android.lib.drone.mission.item.command.YawCondition;
 import com.o3dr.services.android.lib.drone.property.Altitude;
 import com.o3dr.services.android.lib.drone.property.Attitude;
 import com.o3dr.services.android.lib.drone.property.Battery;
 import com.o3dr.services.android.lib.drone.property.Gps;
-import com.o3dr.services.android.lib.drone.property.Home;
 import com.o3dr.services.android.lib.drone.property.Speed;
 import com.o3dr.services.android.lib.drone.property.State;
 import com.o3dr.services.android.lib.drone.property.Type;
@@ -79,8 +73,7 @@ import java.util.List;
 
 import static com.o3dr.android.client.apis.ExperimentalApi.getApi;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback,
-        DroneListener, TowerListener, LinkListener {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, DroneListener, TowerListener, LinkListener {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1000;
     private FusedLocationSource locationSource;
     private NaverMap naverMap;
@@ -366,81 +359,63 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             // Take off
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
             builder.setTitle("경고");
-            builder.setMessage("모터를 가동합니다.");
+            builder.setMessage(DroneMSG.MSG_TAKINGOFF);
 
-            builder.setPositiveButton("예", new DialogInterface.OnClickListener() {
+            builder.setPositiveButton(DroneMSG.MSG_YES, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    VehicleApi.getApi(MainActivity.this.drone).arm(true, false, new SimpleCommandListener() {
+                    ControlApi.getApi(MainActivity.this.drone).takeoff(initAltitude, new AbstractCommandListener() {
                         @Override
-                        public void onError(int executionError) {
-                            alertUser("Unable to arm vehicle.");
+                        public void onSuccess() {
+                            alertUser("Taking off...");
+                            Button button = (Button)findViewById(R.id.btnArmTakeOff);
+                            button.setText("LAND");
+                        }
+
+                        @Override
+                        public void onError(int i) {
+                            alertUser(DroneMSG.ERR_UNABLETAKEOFF);
                         }
 
                         @Override
                         public void onTimeout() {
-                            alertUser("Arming operation timed out.");
-                        }
-
-                        @Override
-                        public void onSuccess() {
-                            super.onSuccess();
-                            Button button = (Button)findViewById(R.id.btnArmTakeOff);
-                            button.setText("Take-Off");
+                            alertUser(DroneMSG.ERR_UNABLETAKEOFF);
                         }
                     });
                 }
             });
 
-            builder.setNegativeButton("아니오", new DialogInterface.OnClickListener() {
+            builder.setNegativeButton(DroneMSG.MSG_NO, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    alertUser("취소하였습니다.");
+                    alertUser(DroneMSG.MSG_CANCLED);
                 }
             });
             AlertDialog dialog = builder.create();
             dialog.show();
 
-            ControlApi.getApi(this.drone).takeoff(initAltitude, new AbstractCommandListener() {
 
-                @Override
-                public void onSuccess() {
-                    alertUser("Taking off...");
-                    Button button = (Button)findViewById(R.id.btnArmTakeOff);
-                    button.setText("LAND");
-                }
-
-                @Override
-                public void onError(int i) {
-                    alertUser("Unable to take off.");
-                }
-
-                @Override
-                public void onTimeout() {
-                    alertUser("Unable to take off.");
-                }
-            });
 
         } else if (!vehicleState.isConnected()) {
             // Connect
-            alertUser("Connect to a drone first");
+            alertUser(DroneMSG.ERR_UNCONNECTED);
         } else {
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
             builder.setTitle("경고");
-            builder.setMessage("모터를 가동합니다.");
+            builder.setMessage(DroneMSG.MSG_LAUNCHMOTER);
 
-            builder.setPositiveButton("예", new DialogInterface.OnClickListener() {
+            builder.setPositiveButton(DroneMSG.MSG_YES, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     VehicleApi.getApi(MainActivity.this.drone).arm(true, false, new SimpleCommandListener() {
                         @Override
                         public void onError(int executionError) {
-                            alertUser("Unable to arm vehicle.");
+                            alertUser(DroneMSG.ERR_UNABLEARM);
                         }
 
                         @Override
                         public void onTimeout() {
-                            alertUser("Arming operation timed out.");
+                            alertUser(DroneMSG.ERR_ARMING_TIMEOUT);
                         }
 
                         @Override
@@ -453,10 +428,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             });
 
-            builder.setNegativeButton("아니오", new DialogInterface.OnClickListener() {
+            builder.setNegativeButton(DroneMSG.MSG_NO, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    alertUser("취소하였습니다.");
+                    alertUser(DroneMSG.MSG_CANCLED);
                 }
             });
             AlertDialog dialog = builder.create();
@@ -887,9 +862,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         naverMap.setOnMapClickListener(new NaverMap.OnMapClickListener() {
             @Override
             public void onMapClick(@NonNull PointF pointF, @NonNull LatLng latLng) {
-                makeMarker(naverMap,latLng);
+                //makeMarker(naverMap,latLng);
                 //makeInfoWindow("test",naverMap);
             }
+        });
+
+        naverMap.setOnMapLongClickListener((point, coord) ->{
+                if(this.modeSelector.getSelectedItem().equals("Guided")) {
+                    GuideMode.AGuideMode(this.drone, new LatLong(coord.latitude, coord.longitude), naverMap);
+                }
+                else{
+                    GuideMode.DialogSimple(this.drone, new LatLong(coord.latitude, coord.longitude), MainActivity.this, naverMap);
+                }
         });
 
         naverMap.addOnCameraChangeListener(new NaverMap.OnCameraChangeListener() {
@@ -905,7 +889,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        naverMap.setLocationTrackingMode(LocationTrackingMode.Follow);
+        //naverMap.setLocationTrackingMode(LocationTrackingMode.Follow);
 
     }
 
