@@ -23,7 +23,7 @@ public class GuideMode {
     static Marker markerGuide = new com.naver.maps.map.overlay.Marker();
     //static OverlayImage guideIcon = OverlayImage.fromResource(R.drawable.guidemodemarker);
 
-    static void DialogSimple(final Drone drone, final LatLong point, final Context context, final NaverMap naverMap){
+    static void GuideModeStart(final Drone drone, final LatLong point, final Context context, final NaverMap naverMap){
         AlertDialog.Builder alt_bld = new AlertDialog.Builder(context);
         alt_bld.setMessage(DroneMSG.MSG_GUIDEMODEON).setCancelable(false).setPositiveButton(DroneMSG.MSG_YES, new DialogInterface.OnClickListener(){
             public void onClick(DialogInterface dialog, int id){
@@ -52,13 +52,13 @@ public class GuideMode {
             }
         });
         AlertDialog alert = alt_bld.create();
-
         alert.setTitle("Title");
         alert.show();
     }
 
-    public static void AGuideMode(final Drone drone, final LatLong point, final NaverMap naverMap){
+    public static void GuideModeStart(final Drone drone, final LatLong point, final NaverMap naverMap){
         ControlApi.getApi(drone).goTo(point,true, null);
+        markerGuide.setPosition(new LatLng(point.getLatitude(),point.getLongitude()));
         markerGuide.setIcon(MarkerIcons.BLACK);
         markerGuide.setMap(naverMap);
     }
@@ -68,5 +68,4 @@ public class GuideMode {
         LatLng target = new LatLng(guidedState.getCoordinate().getLatitude(), guidedState.getCoordinate().getLongitude());
         return  target.distanceTo(recentLatLng) <= 1;
     }
-
 }

@@ -35,7 +35,6 @@ import com.naver.maps.map.overlay.LocationOverlay;
 import com.naver.maps.map.overlay.Marker;
 import com.naver.maps.map.overlay.OverlayImage;
 import com.naver.maps.map.overlay.PolylineOverlay;
-import com.naver.maps.map.renderer.glsurfaceview.MapGLSurfaceView;
 import com.naver.maps.map.util.FusedLocationSource;
 import com.o3dr.android.client.ControlTower;
 import com.o3dr.android.client.Drone;
@@ -83,19 +82,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private int droneType = Type.TYPE_UNKNOWN;
     private ControlTower controlTower;
     private final Handler handler = new Handler();
-    private  LocationOverlay locationOverlay;
+    private LocationOverlay locationOverlay;
     private static final int DEFAULT_UDP_PORT = 14550;
     private static final int DEFAULT_USB_BAUD_RATE = 57600;
     private PolylineOverlay polyline = new PolylineOverlay();
     private Spinner modeSelector;
-    private double initAltitude = 0.0;
+    private double initAltitude = 3.0;
     private Button startVideoStream;
     private Button stopVideoStream;
-
     private Button startVideoStreamUsingObserver;
     private Button stopVideoStreamUsingObserver;
 
-    private LatLng currentDronePosisionInNaverMap;
+    private LatLng pointForGuideMode;
 
     private MediaCodecManager mediaCodecManager;
 
@@ -111,7 +109,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        hideNavigationBar();
         final Context context = getApplicationContext();
         this.controlTower = new ControlTower(context);
         this.drone = new Drone(context);
@@ -121,6 +119,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 onFlightModeSelected(view);
+                TextView textView = ((TextView) parent.getChildAt(0));
                 ((TextView) parent.getChildAt(0)).setTextColor(Color.WHITE);
             }
 
@@ -150,6 +149,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(this);
         locationSource =
                 new FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE);
+    }
+
+    public void onClick_Main(View view){
+        hideNavigationBar();
     }
 
     @Override
@@ -297,18 +300,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public void onBtnAltitudeUpTap(View view){
         Button btnAltitudeText = (Button)findViewById(R.id.btnAltitudeText);
+        if(initAltitude < 10.0) {
+            initAltitude += 0.5;
+            btnAltitudeText.setText(String.format("%3.1fm", initAltitude));
+        }
+        else    alertUser(DroneMSG.MSG_OVERNUMBER);
 
-        initAltitude += 0.5;
-
-        btnAltitudeText.setText(String.format("%3.1fm", initAltitude));
     }
 
     public void onBtnAltitudeDownTap(View view){
         Button btnAltitudeText = (Button)findViewById(R.id.btnAltitudeText);
 
-        initAltitude -= 0.5;
-
-        btnAltitudeText.setText(String.format("%3.1fm", initAltitude));
+        if(initAltitude > 3) {
+            initAltitude -= 0.5;
+            btnAltitudeText.setText(String.format("%3.1fm", initAltitude));
+        }
+        else    alertUser(DroneMSG.MSG_UNDERNUMBER);
     }
 
     public void onFlightModeSelected(View view) {
@@ -340,12 +347,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             VehicleApi.getApi(this.drone).setVehicleMode(VehicleMode.COPTER_LAND, new SimpleCommandListener() {
                 @Override
                 public void onError(int executionError) {
-                    alertUser("Unable to land the vehicle.");
+                    alertUser(DroneMSG.ERR_UNABLELANDING);
                 }
 
                 @Override
                 public void onTimeout() {
-                    alertUser("Unable to land the vehicle.");
+                    alertUser(DroneMSG.ERR_UNABLELANDING);
                 }
 
                 @Override
@@ -395,7 +402,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             dialog.show();
 
 
-
         } else if (!vehicleState.isConnected()) {
             // Connect
             alertUser(DroneMSG.ERR_UNCONNECTED);
@@ -437,7 +443,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             AlertDialog dialog = builder.create();
             dialog.show();
             // Connected but not Armed
-
         }
     }
 
@@ -530,6 +535,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         CameraUpdate cameraUpdate = CameraUpdate.scrollTo(currentLatlngLocation);
         naverMap.moveCamera(cameraUpdate);
 
+        Gps gps = this.drone.getAttribute(AttributeType.GPS);
+
+        if((GuideMode.markerGuide.getMap()!=null) && (GuideMode.CheckGoal(this.drone, new LatLng(gps.getPosition().getLatitude(), gps.getPosition().getLongitude())))){
+            VehicleApi.getApi(this.drone).setVehicleMode(VehicleMode.COPTER_ALT_HOLD);
+            GuideMode.markerGuide.setMap(null);
+            alertUser(DroneMSG.MSG_GUIDEMODEEND);
+        }
     }
 
     protected LatLong getCurrentLocation(){
@@ -579,6 +591,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     // Helper methods
     // ==========================================================
+
+    private void hideNavigationBar() {
+        int uiOptions = getWindow().getDecorView().getSystemUiVisibility();
+        int newUiOptions = uiOptions;
+        boolean isImmersiveModeEnabled =
+                ((uiOptions | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY) == uiOptions);
+        if (isImmersiveModeEnabled) {
+            Log.d(TAG, "Turning immersive mode mode off. ");
+        } else {
+            Log.d(TAG, "Turning immersive mode mode on.");
+        }
+        newUiOptions ^= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+        newUiOptions ^= View.SYSTEM_UI_FLAG_FULLSCREEN;
+        newUiOptions ^= View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+        getWindow().getDecorView().setSystemUiVisibility(newUiOptions);
+    }
 
     protected void alertUser(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
@@ -868,24 +896,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         naverMap.setOnMapLongClickListener((point, coord) ->{
-                if(this.modeSelector.getSelectedItem().equals("Guided")) {
-                    GuideMode.AGuideMode(this.drone, new LatLong(coord.latitude, coord.longitude), naverMap);
-                }
-                else{
-                    GuideMode.DialogSimple(this.drone, new LatLong(coord.latitude, coord.longitude), MainActivity.this, naverMap);
-                }
-        });
-
-        naverMap.addOnCameraChangeListener(new NaverMap.OnCameraChangeListener() {
-            @Override
-            public void onCameraChange(int i, boolean b) {
-            }
-        });
-
-        naverMap.addOnLocationChangeListener(new NaverMap.OnLocationChangeListener() {
-            @Override
-            public void onLocationChange(@NonNull Location location) {
-                showMessage(location.getLatitude() + ", " + location.getLongitude());
+            this.pointForGuideMode = new LatLng(coord.latitude, coord.longitude);
+            if (this.modeSelector.getSelectedItem().toString().equals("Guided")) {
+                GuideMode.GuideModeStart(this.drone, new LatLong(coord.latitude, coord.longitude), naverMap);
+            } else {
+                GuideMode.GuideModeStart(this.drone, new LatLong(coord.latitude, coord.longitude), MainActivity.this, naverMap);
             }
         });
 
