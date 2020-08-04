@@ -12,10 +12,14 @@ import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -67,6 +71,7 @@ import com.o3dr.services.android.lib.model.AbstractCommandListener;
 import com.o3dr.services.android.lib.model.SimpleCommandListener;
 
 import java.io.IOException;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -87,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final int DEFAULT_USB_BAUD_RATE = 57600;
     private PolylineOverlay polyline = new PolylineOverlay();
     private Spinner modeSelector;
+    private List<LocalTime> recycler_time = new ArrayList<>();
     private double initAltitude = 3.0;
     private Button startVideoStream;
     private Button stopVideoStream;
@@ -94,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Button stopVideoStreamUsingObserver;
 
     private LatLng pointForGuideMode;
-
+    ArrayList<String>recycler_list = new ArrayList<>();
     private MediaCodecManager mediaCodecManager;
 
     private TextureView videoView;
@@ -102,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private String videoTag = "testvideotag";
     private Marker droneMarker = new Marker();
     Handler mainHandler;
-
+    private int Recycler_Count = 0;
     private ArrayList<LatLng> polyLineCoords = new ArrayList<>();
 
     @Override
@@ -417,6 +423,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         @Override
                         public void onError(int executionError) {
                             alertUser(DroneMSG.ERR_UNABLEARM);
+                            alertDisplay(DroneMSG.ALERT_GUIDEMODESTART);
                         }
 
                         @Override
@@ -496,7 +503,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void updateYAW(){
         TextView yawTextView = (TextView) findViewById(R.id.yawValueTextView);
         Attitude attitude = this.drone.getAttribute(AttributeType.ATTITUDE);
-        yawTextView.setText(String.format("%3.1f", attitude.getYaw()) + "deg");
+        if ((attitude.getYaw() > 0)) {
+            yawTextView.setText(String.format("%3.1f", attitude.getYaw()) + "deg");
+        } else {
+            yawTextView.setText(String.format("%3.1f", attitude.getYaw() + 180) + "deg");
+        }
     }
 
     protected void updateSattle(){
@@ -611,6 +622,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void alertUser(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
         Log.d(TAG, message);
+        RecyclerView recyclerView = findViewById(R.id.displayAlert);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        recycler_list.add(String.format("  ★  " + message));
+
+        // 리사이클러뷰에 SimpleAdapter 객체 지정.
+        SimpleTextAdapter adapter = new SimpleTextAdapter(recycler_list);
+        recyclerView.setAdapter(adapter);
+    }
+
+    private void alertDisplay(String message) {
+        recycler_list.add(message);
     }
 
     private void runOnMainThread(Runnable runnable) {
