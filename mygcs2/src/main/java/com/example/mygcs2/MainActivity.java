@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.PointF;
 import android.location.Location;
+import android.nfc.Tag;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
@@ -74,6 +75,7 @@ import java.io.IOException;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static com.o3dr.android.client.apis.ExperimentalApi.getApi;
 
@@ -93,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private PolylineOverlay polyline = new PolylineOverlay();
     private Spinner modeSelector;
     private List<LocalTime> recycler_time = new ArrayList<>();
-    private double initAltitude = 3.0;
+    private double initAltitude = 1.0;
     private Button startVideoStream;
     private Button stopVideoStream;
     private Button startVideoStreamUsingObserver;
@@ -140,11 +142,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mediaCodecHandlerThread.start();
         Handler mediaCodecHandler = new Handler(mediaCodecHandlerThread.getLooper());
         mediaCodecManager = new MediaCodecManager(mediaCodecHandler);
-
         mainHandler = new Handler(getApplicationContext().getMainLooper());
-
-
-        // ↓아래로 원본 onCreate
 
         FragmentManager fm = getSupportFragmentManager();
         MapFragment mapFragment = (MapFragment)fm.findFragmentById(R.id.map);
@@ -255,6 +253,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 updateYAW();
                 break;
 
+            case AttributeEvent.AUTOPILOT_MESSAGE:
+                Set<String> keys = extras.keySet();
+                Log.d("BundleSizeTest", "Bundle Size Count = " + keys.size());
+                for(String key : extras.keySet()){
+                    Log.d("BundleKeyTest", "key = " + key + ":" + extras.get(key));
+                }
+                alertDisplay(extras.getString("com.o3dr.services.android.lib.attribute.event.extra.AUTOPILOT_MESSAGE"));
+                break;
+
             default:
                 // Log.i("DRONE_EVENT", event); //Uncomment to see events from the drone
                 break;
@@ -278,7 +285,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     // UI Events
     // ==========================================================
-
     public void onBtnConnectTap(View view) {
         if (this.drone.isConnected())
         {
@@ -289,6 +295,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             ConnectionParameter connectionParams = ConnectionParameter.newUdpConnection(null);
             this.drone.connect(connectionParams);
         }
+    }
+
+    public void onRecyclerViewTap(View veiw){
+        RecyclerView recyclerView = findViewById(R.id.displayAlert);
+        recyclerView.setVisibility(View.INVISIBLE);
     }
 
     public void onBtnAltitudeTextTap(View view){
@@ -317,7 +328,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onBtnAltitudeDownTap(View view){
         Button btnAltitudeText = (Button)findViewById(R.id.btnAltitudeText);
 
-        if(initAltitude > 3) {
+        if(initAltitude > 1.0) {
             initAltitude -= 0.5;
             btnAltitudeText.setText(String.format("%3.1fm", initAltitude));
         }
@@ -374,7 +385,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             builder.setTitle("경고");
             builder.setMessage(DroneMSG.MSG_TAKINGOFF);
 
-            builder.setPositiveButton(DroneMSG.MSG_YES, new DialogInterface.OnClickListener() {
+            //TODO : string.xml에서 값 불러오기
+            builder.setPositiveButton(getResources().getString()), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     ControlApi.getApi(MainActivity.this.drone).takeoff(initAltitude, new AbstractCommandListener() {
@@ -423,7 +435,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         @Override
                         public void onError(int executionError) {
                             alertUser(DroneMSG.ERR_UNABLEARM);
-                            alertDisplay(DroneMSG.ALERT_GUIDEMODESTART);
                         }
 
                         @Override
@@ -445,7 +456,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     alertUser(DroneMSG.MSG_CANCLED);
-                }
+            }
             });
             AlertDialog dialog = builder.create();
             dialog.show();
@@ -549,7 +560,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Gps gps = this.drone.getAttribute(AttributeType.GPS);
 
         if((GuideMode.markerGuide.getMap()!=null) && (GuideMode.CheckGoal(this.drone, new LatLng(gps.getPosition().getLatitude(), gps.getPosition().getLongitude())))){
-            VehicleApi.getApi(this.drone).setVehicleMode(VehicleMode.COPTER_ALT_HOLD);
+            VehicleApi.getApi(this.drone).setVehicleMode(VehicleMode.COPTER_LOITER);
             GuideMode.markerGuide.setMap(null);
             alertUser(DroneMSG.MSG_GUIDEMODEEND);
         }
@@ -622,18 +633,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void alertUser(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
         Log.d(TAG, message);
+
+    }
+
+    private void alertDisplay(String message) {
         RecyclerView recyclerView = findViewById(R.id.displayAlert);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         recycler_list.add(String.format("  ★  " + message));
 
-        // 리사이클러뷰에 SimpleAdapter 객체 지정.
         SimpleTextAdapter adapter = new SimpleTextAdapter(recycler_list);
         recyclerView.setAdapter(adapter);
-    }
-
-    private void alertDisplay(String message) {
-        recycler_list.add(message);
     }
 
     private void runOnMainThread(Runnable runnable) {

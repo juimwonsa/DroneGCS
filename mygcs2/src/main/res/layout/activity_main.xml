@@ -12,8 +12,8 @@
         android:name="com.naver.maps.map.MapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="0dp" />
+        tools:layout_editor_absoluteX="97dp"
+        tools:layout_editor_absoluteY="37dp" />
 
     <Button
         android:id="@+id/btnConnect"
@@ -169,6 +169,7 @@
         android:onClick="onBtnAltitudeDownTap"/>
 
     <android.support.v7.widget.RecyclerView
+        android:onClick="onRecyclerViewTap"
         android:id="@+id/displayAlert"
         android:layout_width="295dp"
         android:layout_height="100dp"

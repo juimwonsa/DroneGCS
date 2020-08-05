@@ -4,4 +4,24 @@
     <string name= "btnArmTakeOff">ARM</string>
     <string name= "button4">hybrid</string>
     <string name= "button5">basic</string>
+
+    <string name= "MSG_YES">Yes</string>
+    <string name= "MSG_NO">No</string>
+    <string name= "MSG_CANCLED">Cancled</string>
+    <string name= "MSG_LAUNCHMOTER">모터를 가동합니다.</string>
+    <string name= "MSG_TAKINGOFF">기체가 상승합니다.</string>
+    <string name= "MSG_GUIDEMODEON">확인하시면 가이드모드로 전환 후 기체가 이동합니다.</string>
+    <string name= "MSG_OVERNUMBER">10 이상 고도를 높일 수 없습니다.</string>
+    <string name= "MSG_UNDERNUMBER">3 이하 고도를 낮출 수 없습니다.</string>
+    <string name= "MSG_GUIDEMODEEND">목적지에 도착하였습니다.</string>
+    <string name= "ERR_UNABLEARM">Unable to arm vehicle.</string>
+    <string name= "ERR_UNABLETAKEOFF">Unable to Take-Off vehicle.</string>
+    <string name= "ERR_UNABLELANDING">Unable to land the vehicle.</string>
+    <string name= "ERR_UNCONNECTED">Connect to a drone first.</string>
+    <string name= "ERR_ARMING_TIMEOUT5">Arming operation timed out.</string>
+    <string name= "ALERT_LAUNCHMOTER">* 모터가동</string>
+    <string name= "ALERT_TAKEOFF">* 이륙완료</string>
+    <string name= "ALERT_LANDING">* 착륙완료</string>
+    <string name= "ALERT_GUIDEMODESTART">* 기체가 목표지점으로 이동합니다.</string>
+    <string name= "ALERT_GUIDEMODEEND">* 기체가 목표지점에 도착했습니다.</string>
 </resources>
