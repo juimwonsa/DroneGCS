@@ -301,12 +301,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Button btnLock = findViewById(R.id.btnLock);
         if (btnLock.getText().equals("Unlock")){
             btnLock.setText("Lock");
-            //TODO : 드론 위치 무시
         }
 
-        else(btnLock.getText().equals("Lock")){
+        else {
             btnLock.setText("Unlock");
-            //TODO : 드론 위치 고정
         }
     }
 
@@ -567,11 +565,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         this.arrowheadPath.setCoords(arrowheads);
         this.locationOverlay.setVisible(true);
         this.arrowheadPath.setMap(naverMap);
-        CameraUpdate cameraUpdate = CameraUpdate.scrollTo(currentLatlngLocation);
-        naverMap.moveCamera(cameraUpdate);
+        Button button = findViewById(R.id.btnLock);
+        if(button.getText().equals("Unlock")) {
+            CameraUpdate cameraUpdate = CameraUpdate.scrollTo(currentLatlngLocation);
+            naverMap.moveCamera(cameraUpdate);
+        }
 
         Gps gps = this.drone.getAttribute(AttributeType.GPS);
-
         if((GuideMode.markerGuide.getMap()!=null) && (GuideMode.CheckGoal(this.drone, new LatLng(gps.getPosition().getLatitude(), gps.getPosition().getLongitude())))){
             VehicleApi.getApi(this.drone).setVehicleMode(VehicleMode.COPTER_LOITER);
             GuideMode.markerGuide.setMap(null);
