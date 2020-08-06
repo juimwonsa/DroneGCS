@@ -112,6 +112,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     Handler mainHandler;
     private int Recycler_Count = 0;
     private ArrayList<LatLng> polyLineCoords = new ArrayList<>();
+    private ArrayList<LatLng> arrowheads = new ArrayList<LatLng>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -306,6 +307,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         else {
             btnLock.setText("Unlock");
         }
+    }
+
+    public void onBtnClearTap(View view) {
+        //TODO: 네이버맵의 OVERLAY 제거
+
+
     }
 
     public void onRecyclerViewTap(View veiw){
@@ -559,10 +566,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         polyline.setCoords(polyLineCoords);
         polyline.setMap(naverMap);
 
-        ArrayList<LatLng> arrowheads = new ArrayList<LatLng>();
-        arrowheads.add(currentLatlngLocation);
-        arrowheads.add(Utils.headPointer(currentLatlngLocation, attitude.getYaw()));
-        this.arrowheadPath.setCoords(arrowheads);
+        this.arrowheads.add(currentLatlngLocation);
+        this.arrowheads.add(Utils.headPointer(currentLatlngLocation, attitude.getYaw()));
+        this.arrowheadPath.setCoords(this.arrowheads);
         this.locationOverlay.setVisible(true);
         this.arrowheadPath.setMap(naverMap);
         Button button = findViewById(R.id.btnLock);
@@ -975,7 +981,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         marker.setMap(naverMap);
     }
 
-    //TODO 앱 종료됨
     public void makeInfoWindow(String msg, NaverMap targetMap){
         InfoWindow infoWindow = new InfoWindow();
         infoWindow.setAdapter(new InfoWindow.DefaultTextAdapter(getBaseContext()) {
