@@ -297,6 +297,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    public void onBtnLockTap(View view) {
+        Button btnLock = findViewById(R.id.btnLock);
+        if (btnLock.getText().equals("Unlock")){
+            btnLock.setText("Lock");
+            //TODO : 드론 위치 무시
+        }
+
+        else(btnLock.getText().equals("Lock")){
+            btnLock.setText("Unlock");
+            //TODO : 드론 위치 고정
+        }
+    }
+
     public void onRecyclerViewTap(View veiw){
         RecyclerView recyclerView = findViewById(R.id.displayAlert);
         recyclerView.setVisibility(View.INVISIBLE);
@@ -386,7 +399,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             builder.setMessage(DroneMSG.MSG_TAKINGOFF);
 
             //TODO : string.xml에서 값 불러오기
-            builder.setPositiveButton(getResources().getString()), new DialogInterface.OnClickListener() {
+            builder.setPositiveButton(DroneMSG.MSG_YES, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     ControlApi.getApi(MainActivity.this.drone).takeoff(initAltitude, new AbstractCommandListener() {

@@ -135,38 +135,38 @@
         android:text="3.0m"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.912"
+        app:layout_constraintHorizontal_bias="0.95"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.179" />
-
-    <Button
-        android:id="@+id/btnAltitudeUp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="+0.5"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.912"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnAltitudeText"
-        app:layout_constraintVertical_bias="0.068"
-        android:visibility="invisible"
-        android:onClick="onBtnAltitudeUpTap"/>
+        app:layout_constraintVertical_bias="0.184" />
 
     <Button
         android:id="@+id/btnAltitudeDown"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:onClick="onBtnAltitudeDownTap"
         android:text="-0.5"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.912"
+        app:layout_constraintHorizontal_bias="0.95"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnAltitudeUp"
-        app:layout_constraintVertical_bias="0.064"
+        app:layout_constraintVertical_bias="0.075" />
+
+    <Button
+        android:id="@+id/btnAltitudeUp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="onBtnAltitudeUpTap"
+        android:text="+0.5"
         android:visibility="invisible"
-        android:onClick="onBtnAltitudeDownTap"/>
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.95"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnAltitudeText"
+        app:layout_constraintVertical_bias="0.076" />
 
     <android.support.v7.widget.RecyclerView
         android:onClick="onRecyclerViewTap"
@@ -179,6 +179,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.151" />
+
+    <Button
+        android:id="@+id/btnLock"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Unlock"
+        android:onClick="onBtnLockTap"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.95"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.757" />
 
 
 </android.support.constraint.ConstraintLayout>
