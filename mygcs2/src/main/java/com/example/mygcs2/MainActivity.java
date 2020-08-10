@@ -4,8 +4,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.PointF;
-import android.location.Location;
-import android.nfc.Tag;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
@@ -19,8 +17,6 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -39,6 +35,7 @@ import com.naver.maps.map.overlay.InfoWindow;
 import com.naver.maps.map.overlay.LocationOverlay;
 import com.naver.maps.map.overlay.Marker;
 import com.naver.maps.map.overlay.OverlayImage;
+import com.naver.maps.map.overlay.PolygonOverlay;
 import com.naver.maps.map.overlay.PolylineOverlay;
 import com.naver.maps.map.util.FusedLocationSource;
 import com.o3dr.android.client.ControlTower;
@@ -100,10 +97,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Button stopVideoStream;
     private Button startVideoStreamUsingObserver;
     private Button stopVideoStreamUsingObserver;
-
+    private PolygonOverlay polygon = new PolygonOverlay();
     private LatLng pointForGuideMode;
     ArrayList<String>recycler_list = new ArrayList<>();
     private MediaCodecManager mediaCodecManager;
+
+
 
     private TextureView videoView;
 
@@ -113,6 +112,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private int Recycler_Count = 0;
     private ArrayList<LatLng> polyLineCoords = new ArrayList<>();
     private ArrayList<LatLng> arrowheads = new ArrayList<LatLng>();
+    private ArrayList<Marker> polygonMarkers = new ArrayList<>();
+    private ArrayList<LatLng> polygonPoints = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -309,10 +310,55 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    public void onBtnABTap(View view) {
+        //TODO: AB버튼
+        Button missionBtn = findViewById(R.id.btnMission);
+        missionBtn.setText("AB");
+        missionBtnInvisible();
+    }
+
+    public void onBtnPolygonTap(View view) {
+        //TODO: Polygon버튼
+        Button missionBtn = findViewById(R.id.btnMission);
+        missionBtn.setText("다각형");
+        missionBtnInvisible();
+    }
+
+    public void onBtnCancleTap(View view) {
+        missionBtnInvisible();
+    }
+
     public void onBtnClearTap(View view) {
         //TODO: 네이버맵의 OVERLAY 제거
+        polygon.setMap(null);
+        for(Marker marker : polygonMarkers){
+            marker.setMap(null);
+        }
+        polygon.setMap(null);
+        polygonMarkers.clear();
+        polygonPoints.clear();
+    }
 
+    public void onBtnMissionTap(View view) {
+        missionBtnVisible();
+    }
 
+    public void missionBtnVisible(){
+        Button btnPolygon = findViewById(R.id.btnPolygon);
+        Button btnCancle = findViewById(R.id.btnCancle);
+        Button btnAB = findViewById(R.id.btnAB);
+        btnAB.setVisibility(View.VISIBLE);
+        btnPolygon.setVisibility(View.VISIBLE);
+        btnCancle.setVisibility(View.VISIBLE);
+    }
+
+    public void missionBtnInvisible(){
+        Button btnPolygon = findViewById(R.id.btnPolygon);
+        Button btnCancle = findViewById(R.id.btnCancle);
+        Button btnAB = findViewById(R.id.btnAB);
+        btnAB.setVisibility(View.INVISIBLE);
+        btnPolygon.setVisibility(View.INVISIBLE);
+        btnCancle.setVisibility(View.INVISIBLE);
     }
 
     public void onRecyclerViewTap(View veiw){
@@ -939,11 +985,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         naverMap.setLocationSource(locationSource);
         naverMap.getUiSettings().setZoomControlEnabled(false);
 
-        naverMap.setOnMapClickListener(new NaverMap.OnMapClickListener() {
-            @Override
-            public void onMapClick(@NonNull PointF pointF, @NonNull LatLng latLng) {
-                //makeMarker(naverMap,latLng);
-                //makeInfoWindow("test",naverMap);
+        naverMap.setOnMapClickListener((point, coord) ->{
+            Button missionBtn = findViewById(R.id.btnMission);
+            if(missionBtn.getText().equals("다각형")) {
+                Marker polygonMarker = new Marker(new LatLng(coord.latitude, coord.longitude));
+                polygonMarkers.add(polygonMarker);
+                polygonPoints.add(new LatLng(coord.latitude, coord.longitude));
+                polygonMarker.setMap(naverMap);
+            }
+
+            if(polygonMarkers.size() > 2){
+                polygonPoints = Utils.sortLatLngArray(polygonPoints);
+                polygon.setCoords(polygonPoints);
+                polygon.setMap(naverMap);
             }
         });
 
@@ -955,8 +1009,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 GuideMode.GuideModeStart(this.drone, new LatLong(coord.latitude, coord.longitude), MainActivity.this, naverMap);
             }
         });
-
-        //naverMap.setLocationTrackingMode(LocationTrackingMode.Follow);
 
     }
 
