@@ -4,10 +4,13 @@ import com.naver.maps.geometry.LatLng;
 import com.naver.maps.geometry.MathUtils;
 import com.naver.maps.map.NaverMap;
 import com.o3dr.services.android.lib.coordinate.LatLong;
+
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
+import static com.o3dr.services.android.lib.util.MathUtils.addDistance;
 import static com.o3dr.services.android.lib.util.MathUtils.getDistance2D;
 
 public class Utils {
@@ -44,6 +47,29 @@ public class Utils {
         };
 
         Collections.sort(points, comparator);
+
+        double left = 400;
+        int index = 0;
+        int indexOfLeftCoord = 0;
+        for(LatLng coord : points){
+            if(coord.longitude < left){
+                left = coord.longitude;
+                indexOfLeftCoord = index;
+            }
+            index++;
+        }
+
+        ArrayList<LatLng> copyArray = new ArrayList<>();
+
+        for(int i = 0  ; i < indexOfLeftCoord; i++ ){
+            copyArray.add(points.get(0));
+            points.remove(0);
+
+        }
+        for(int i = 0 ; i < indexOfLeftCoord ; i++){
+            points.add(copyArray.get(i));
+        }
+
         return points;
     }
 
@@ -65,40 +91,17 @@ public class Utils {
         return degree;
     }
 
-    public static void missionAtoB(ArrayList<LatLng> polygonPointArray, int distanceAtoB, double takeoffLatitude){
-        polygonPointArray = sortLatLngArray(polygonPointArray);
-        int maxLengthArrayNum = 0;
-        double maxLength = 0;
-        double angle = 0.0;
-        double high = polygonPointArray.get(0).latitude;
-        double low = polygonPointArray.get(0).latitude;
-        double left = polygonPointArray.get(0).longitude;
-        double right = polygonPointArray.get(0).longitude;
-
-        for(int i = 1 ; i < polygonPointArray.size() ; i++){
-            if(getDistance2D(Utils.latLngToLatLong(polygonPointArray.get(i-1)), Utils.latLngToLatLong(polygonPointArray.get(i)))>maxLength){
-                if(high < polygonPointArray.get(i).latitude){
-                    high = polygonPointArray.get(i).latitude;
-                }
-
-                if(low > polygonPointArray.get(i).latitude){
-                    low = polygonPointArray.get(i).latitude;
-                }
-
-                if(left > polygonPointArray.get(i).longitude){
-                    left = polygonPointArray.get(i).longitude;
-                }
-
-                if(right < polygonPointArray.get(i).longitude){
-                    right = polygonPointArray.get(i).longitude;
-                }
-
-                maxLength = getDistance2D(Utils.latLngToLatLong(polygonPointArray.get(i-1)), Utils.latLngToLatLong(polygonPointArray.get(i)));
-                maxLengthArrayNum = i;
-            }
+    public static ArrayList<LatLng> sortArrayForMission(ArrayList<LatLng> missionArray){
+        int sizeOfArrayForSort = missionArray.size() / 4;
+        for(int i = 0 ; i < sizeOfArrayForSort ; i++){
+            Collections.swap(missionArray, ((4*i)+2), ((4*i)+3));
         }
-        angle = angleOfTwoPoint(polygonPointArray.get(maxLengthArrayNum), polygonPointArray.get(maxLengthArrayNum + 1));
+        return missionArray;
+    }
 
-
+    public static LatLng getCrossPoint(LatLng first, LatLng second, LatLng third, LatLng fourth) {
+        double x = (((first.longitude*second.latitude - first.latitude*second.longitude)*(third.longitude - fourth.longitude) - (first.longitude - second.longitude)*(third.longitude*fourth.latitude-third.latitude*fourth.longitude))/((first.longitude - second.longitude)*(third.latitude - fourth.latitude) - (first.latitude - second.latitude)*(third.longitude - fourth.longitude)));
+        double y = (((first.longitude*second.latitude - first.latitude*second.longitude)*(third.latitude - fourth.latitude) - (first.latitude - second.latitude)*(third.longitude*fourth.latitude-third.latitude*fourth.longitude))/((first.longitude - second.longitude)*(third.latitude - fourth.latitude) - (first.latitude - second.latitude)*(third.longitude - fourth.longitude)));
+        return new LatLng(y, x);
     }
 }

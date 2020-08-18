@@ -35,6 +35,7 @@ import com.naver.maps.map.overlay.InfoWindow;
 import com.naver.maps.map.overlay.LocationOverlay;
 import com.naver.maps.map.overlay.Marker;
 import com.naver.maps.map.overlay.OverlayImage;
+import com.naver.maps.map.overlay.PathOverlay;
 import com.naver.maps.map.overlay.PolygonOverlay;
 import com.naver.maps.map.overlay.PolylineOverlay;
 import com.naver.maps.map.util.FusedLocationSource;
@@ -67,10 +68,18 @@ import com.o3dr.services.android.lib.drone.property.VehicleMode;
 import com.o3dr.services.android.lib.gcs.link.LinkConnectionStatus;
 import com.o3dr.services.android.lib.model.AbstractCommandListener;
 import com.o3dr.services.android.lib.model.SimpleCommandListener;
+import com.o3dr.services.android.lib.util.MathUtils;
+
+import org.droidplanner.services.android.impl.core.helpers.geoTools.LineLatLong;
+import org.droidplanner.services.android.impl.core.polygon.Polygon;
+import org.droidplanner.services.android.impl.core.survey.grid.CircumscribedGrid;
+import org.droidplanner.services.android.impl.core.survey.grid.Trimmer;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -101,8 +110,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LatLng pointForGuideMode;
     ArrayList<String>recycler_list = new ArrayList<>();
     private MediaCodecManager mediaCodecManager;
-
-
+    public ArrayList<LatLong> polygonPointList = new ArrayList<>();
+    public ArrayList<LatLong> sprayPointList = new ArrayList<>();
 
     private TextureView videoView;
 
@@ -366,6 +375,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         recyclerView.setVisibility(View.INVISIBLE);
     }
 
+    public void onBtnCreateTap(View view) throws Exception {
+        missionAtoB();
+        PathOverlay pathOverlay = new PathOverlay();
+        ArrayList<LatLng> missionlatlng = new ArrayList<LatLng>();
+        for(LatLong latlongs : sprayPointList){
+            missionlatlng.add(Utils.latLongToLatLng(latlongs));
+        }
+        pathOverlay.setCoords(missionlatlng);
+        pathOverlay.setMap(naverMap);
+    }
+
     public void onBtnAltitudeTextTap(View view){
         Button btnAltitudeUp = (Button) findViewById(R.id.btnAltitudeUp);
         Button btnAltitudeDown= (Button) findViewById(R.id.btnAltitudeDown);
@@ -597,6 +617,70 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         voltageValueTextView.setText(String.format("%3.1f", battery.getBatteryVoltage()));
     }
 
+    protected void missionAtoB() throws Exception {
+        //TODO: polygon미션 만들기
+        List<LatLong> polygonPoint = new ArrayList<>();
+        for(LatLng latLng : polygonPoints) {
+            polygonPoint.add(Utils.latLngToLatLong(latLng));
+        }
+
+        double angle = 32.4;
+        double distance = 20.0;
+
+        List<LineLatLong> circumscribedGrid = new CircumscribedGrid(polygonPoint, angle, distance).getGrid();
+        List<LineLatLong> trimedGrid = new Trimmer(circumscribedGrid, makePoly().getLines()).getTrimmedGrid();
+
+        for (int i = 0; i < trimedGrid.size(); i++) {
+            LineLatLong line = trimedGrid.get(i);
+            if(line.getStart().getLatitude() > line.getEnd().getLatitude()) {
+                LineLatLong line1 = new LineLatLong(line.getEnd(),line.getStart());
+                trimedGrid.set(i, line1);
+            }
+        }
+
+//        Gps gps = this.drone.getAttribute(AttributeType.GPS);
+//        LatLong dronePosition = gps.getPosition();
+//
+//        double dist1 = MathUtils.pointToLineDistance(trimedGrid.get(0).getStart(), trimedGrid.get(0).getEnd(), dronePosition);
+//        double dist2 = MathUtils.pointToLineDistance(trimedGrid.get(trimedGrid.size()-1).getStart(), trimedGrid.get(trimedGrid.size()-1).getEnd(), dronePosition);
+//
+//        if (dist2 < dist1) {
+//            Collections.reverse(trimedGrid);
+//            double distStart = MathUtils.getDistance2D(dronePosition, trimedGrid.get(trimedGrid.size()-1).getStart());
+//            double distEnd = MathUtils.getDistance2D(dronePosition, trimedGrid.get(trimedGrid.size()-1).getEnd());
+//            if (distStart > distEnd) {
+//                for (int i = 0; i < trimedGrid.size(); i++) {
+//                    LineLatLong line = trimedGrid.get(i);
+//                    LineLatLong line1 = new LineLatLong(line.getEnd(),line.getStart());
+//                    trimedGrid.set(i, line1);
+//                }
+//            }
+//        }
+
+        for (int i = 0; i < trimedGrid.size(); i++) {
+            LineLatLong line = trimedGrid.get(i);
+            if (i % 2 != 0) {
+                line = new LineLatLong(line.getEnd(), line.getStart());
+                trimedGrid.set(i,line);
+            }
+        }
+
+        sprayPointList.clear();
+        for(LineLatLong lineLatLong : trimedGrid) {
+            sprayPointList.add(lineLatLong.getStart());
+            sprayPointList.add(lineLatLong.getEnd());
+        }
+    }
+
+    protected Polygon makePoly() {
+        Polygon poly = new Polygon();
+        List<LatLong> latLongList = new ArrayList<>();
+        for(LatLng latLng : polygonPoints) {
+            latLongList.add(Utils.latLngToLatLong(latLng));
+        }
+        poly.addPoints(latLongList);
+        return poly;
+    }
 
     protected void updateDroneMarker(){
         LatLong currentLatlongLocation = getCurrentLocation();
@@ -1130,37 +1214,4 @@ final Button takePic = (Button) findViewById(R.id.take_photo_button);
 
             }
         });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- */
+*/
